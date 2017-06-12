@@ -4,7 +4,9 @@
   "description": "Ultra minimalistic expressjs-style middleware pattern implementation",
   "main": "index.js",
   "scripts": {
-    "test": "node index.test.js"
+    "pretest": "eslint .",
+    "test": "jest",
+    "posttest": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -18,5 +20,9 @@
   "bugs": {
     "url": "https://github.com/branneman/middlewarejs/issues"
   },
-  "homepage": "https://github.com/branneman/middlewarejs#readme"
+  "homepage": "https://github.com/branneman/middlewarejs#readme",
+  "devDependencies": {
+    "eslint": "^4.0.0",
+    "jest": "^20.0.4"
+  }
 }
