@@ -66,7 +66,7 @@ MiddlewareJS.prototype.use = function use(handler) {
     }
 
     // Prepend to middlewares array
-    this._middlewares.unshift(handler);
+    this._middlewares.push(handler);
 
 };
 
