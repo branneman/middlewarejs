@@ -1,0 +1,22 @@
+{
+  "name": "middlewarejs",
+  "version": "0.1.0",
+  "description": "Ultra minimalistic expressjs-style middleware pattern implementation",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/branneman/middlewarejs.git"
+  },
+  "keywords": [
+    "middleware"
+  ],
+  "author": "Bran van der Meer <branmovic@gmail.com> (http://bran.name/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/branneman/middlewarejs/issues"
+  },
+  "homepage": "https://github.com/branneman/middlewarejs#readme"
+}
