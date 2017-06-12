@@ -37,7 +37,7 @@ MiddlewareJS.prototype.run = function run() {
 
     // Call all middlewares in a recursive loop
     var errHandler = this._errorHandler.bind(this);
-    (function call() {
+    (function next() {
 
         if (!mws.length) {
             return done.apply({}, args);
@@ -46,7 +46,7 @@ MiddlewareJS.prototype.run = function run() {
         var mw = mws.shift();
 
         try {
-            mw.apply(mw, args.concat(call));
+            mw.apply(mw, args.concat(next));
         } catch (err) {
             errHandler.apply({}, args.concat(err));
         }
