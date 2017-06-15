@@ -24,9 +24,11 @@ describe('MiddlewareJS', function() {
             expect(typeof middleware.MiddlewareJS).toBe('function');
         });
 
+        xit('class constructor must be called with `new`', function() {});
+
     });
 
-    describe('middleware.run()', function() {
+    describe('run() / use()', function() {
 
         var middleware = require('.');
 
@@ -38,6 +40,36 @@ describe('MiddlewareJS', function() {
         it('succeeds without middleware, with args', function(done) {
             var app = middleware();
             app.run({}, {}, done);
+        });
+
+        xit('succeeds without a callback', function() {});
+
+        it('use() throws when given an incorrect type', function() {
+
+            var fn = 'not a function';
+
+            var app = middleware();
+
+            expect(function() {
+                app.use(fn);
+            }).toThrow();
+
+        });
+
+        it('succeeds running multiple times', function() {
+
+            var fn1 = jest.fn();
+            var fn2 = jest.fn();
+            var fn3 = jest.fn();
+
+            var app = middleware();
+            app.run({}, fn1);
+            app.run({}, {}, fn2);
+            app.run({}, 13, 37, {}, fn3);
+
+            expect(fn1).toHaveBeenCalled();
+            expect(fn2).toHaveBeenCalled();
+            expect(fn3).toHaveBeenCalled();
         });
 
         it('iterates through basic middleware', function(done) {
@@ -57,9 +89,62 @@ describe('MiddlewareJS', function() {
             }
         });
 
+        it('halts execution when next() is not called', function() {
+
+            var fn1 = jest.fn();
+            var fn2 = jest.fn(function(next) { next(); });
+            var cb = jest.fn();
+
+            var app = middleware();
+            app.use(fn1);
+            app.use(fn2);
+            app.run(cb);
+
+            expect(fn1).toHaveBeenCalled();
+            expect(fn2).not.toHaveBeenCalled();
+            expect(cb).not.toHaveBeenCalled();
+
+        });
+
+        xit('handles async handlers', function() {});
+
     });
 
-    describe('middleware.use()', function() {
+    describe('err()', function() {
+
+        var middleware = require('.');
+
+        it('err() throws when given an incorrect type', function() {
+
+            var fn = 'not a function';
+
+            var app = middleware();
+
+            expect(function() {
+                app.err(fn);
+            }).toThrow();
+
+        });
+
+        xit('throws with the default error handler', function() {
+
+            var fn1 = function() { /*throw new Error('E!');*/ };
+            var fn2 = jest.fn(function(next) { next(); });
+
+            var app = middleware();
+            app.use(fn1);
+            app.use(fn2);
+
+            expect(app.run).toThrow();
+            expect(fn2).not.toHaveBeenCalled();
+
+        });
+
+        xit('calls a specified error handler', function() {});
+
+    });
+
+    describe('guarded handlers', function() {
 
         var middleware = require('.');
 
@@ -73,7 +158,7 @@ describe('MiddlewareJS', function() {
             };
         };
 
-        it('guarded handlers: executes correct guard', function(done) {
+        it('executes correct guard', function(done) {
 
             var fn1Called = false;
             var fn2Called = false;
@@ -98,7 +183,7 @@ describe('MiddlewareJS', function() {
             }
         });
 
-        it('guarded handlers: skips incorrect guard', function(done) {
+        it('skips incorrect guard', function(done) {
 
             var fn1Called = false;
             var fn2Called = false;
