@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "pretest": "eslint .",
-    "test": "jest",
-    "posttest": "jest --coverage"
+    "test": "jest --verbose --coverage"
   },
   "repository": {
     "type": "git",
