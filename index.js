@@ -13,6 +13,9 @@ module.exports.MiddlewareJS = MiddlewareJS;
  * @returns {MiddlewareJS}
  */
 function factory() {
+    if (this instanceof factory) { // eslint-disable-line no-invalid-this
+        throw new Error('middleware factory function must not be called with `new`!');
+    }
     return new MiddlewareJS();
 }
 
@@ -21,6 +24,9 @@ function factory() {
  * @constructor
  */
 function MiddlewareJS() {
+    if (!(this instanceof MiddlewareJS)) {
+        throw new Error('MiddlewareJS constructor must be called with `new`!');
+    }
     this._middlewares = [];
 }
 
@@ -36,7 +42,6 @@ MiddlewareJS.prototype.run = function run() {
     var mws = this._middlewares.slice();
 
     // Call all middlewares in a recursive loop
-    var errHandler = this._errorHandler.bind(this);
     (function next() {
 
         if (!mws.length) {
@@ -45,11 +50,7 @@ MiddlewareJS.prototype.run = function run() {
 
         var mw = mws.shift();
 
-        try {
-            mw.apply(mw, args.concat(next));
-        } catch (err) {
-            errHandler.apply({}, args.concat(err));
-        }
+        mw.apply(mw, args.concat(next));
 
     }());
 
@@ -68,28 +69,4 @@ MiddlewareJS.prototype.use = function use(handler) {
     // Prepend to middlewares array
     this._middlewares.push(handler);
 
-};
-
-/**
- * @param {function} handler
- */
-MiddlewareJS.prototype.err = function err(handler) {
-
-    // Guard
-    if (typeof handler !== 'function') {
-        throw new Error('Errorhandler must be a function!');
-    }
-
-    this._errorHandler = handler;
-
-};
-
-/**
- * Default error handler
- *  Throws the last argument it receives
- * @private
- */
-MiddlewareJS.prototype._errorHandler = function _errorHandler() {
-    var args = [].slice.call(arguments);
-    throw args.pop();
 };
