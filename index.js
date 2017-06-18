@@ -9,6 +9,12 @@ module.exports = factory;
 module.exports.MiddlewareJS = MiddlewareJS;
 
 /**
+ * Force empty `this` value and prevent usage within done(), handlers and filters
+ * @type {Object} - An immutable empty object with `null` as it's prototype
+ */
+var emptyContext = Object.freeze(Object.create(null));
+
+/**
  * Factory function
  * @returns {MiddlewareJS}
  */
@@ -45,28 +51,60 @@ MiddlewareJS.prototype.run = function run() {
     (function next() {
 
         if (!mws.length) {
-            return done.apply({}, args);
+            return done.apply(emptyContext, args);
         }
 
         var mw = mws.shift();
 
-        mw.apply(mw, args.concat(next));
+        return mw.apply(emptyContext, args.concat(next));
 
     }());
 
 };
 
 /**
- * @param {function} handler
+ * @param {function} filterFn
+ * @param {function} handlerFn
  */
-MiddlewareJS.prototype.use = function use(handler) {
+MiddlewareJS.prototype.use = function use(filterFn, handlerFn) {
 
-    // Guard
-    if (typeof handler !== 'function') {
-        throw new Error('Handler must be a function!');
+    // First argument is optional
+    if (arguments.length === 1) {
+        handlerFn = filterFn;
     }
 
-    // Prepend to middlewares array
-    this._middlewares.push(handler);
+    // Guard
+    if (typeof handlerFn !== 'function') {
+        throw new Error('Handler must be a function!');
+    }
+    if (typeof filterFn !== 'function') {
+        throw new Error('Filter must be a function!');
+    }
+
+    // Apply filter if specified
+    var fn = handlerFn;
+    if (arguments.length !== 1) {
+        fn = _filter(filterFn, handlerFn);
+    }
+
+    // Push to middlewares array
+    this._middlewares.push(fn);
 
 };
+
+/**
+ * @param {function(): boolean} filterFn
+ * @param {function} handlerFn
+ * @returns {function}
+ * @private
+ */
+function _filter(filterFn, handlerFn) {
+    return function _use() {
+        var args = [].slice.call(arguments, 0, -1);
+        var next = arguments[arguments.length - 1];
+        if (filterFn.apply(emptyContext, args)) {
+            return handlerFn.apply(emptyContext, arguments);
+        }
+        return next();
+    };
+}
