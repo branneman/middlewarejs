@@ -1,6 +1,6 @@
 {
   "name": "middlewarejs",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ultra minimalistic expressjs-style middleware pattern implementation",
   "main": "index.js",
   "scripts": {
