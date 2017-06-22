@@ -16,16 +16,23 @@ describe('MiddlewareJS', function() {
             var middleware = require('./index.js');
 
             expect(middleware).toBeDefined();
+
         });
 
         it('exposes the factory function', function() {
+
             var middleware = require('.');
+
             expect(typeof middleware).toBe('function');
+
         });
 
         it('exposes a class constructor', function() {
+
             var middleware = require('.');
+
             expect(typeof middleware.MiddlewareJS).toBe('function');
+
         });
 
         it('factory function must not be called with `new`', function() {
@@ -39,11 +46,18 @@ describe('MiddlewareJS', function() {
             expect(function() {
                 new middleware();
             }).toThrow();
+
         });
 
-        it('class constructor must be called with `new`', function() {
+    });
 
-            var MiddlewareJS = require('.').MiddlewareJS;
+    describe('MiddlewareJS()', function() {
+
+        var middleware = require('.');
+
+        it('constructor must be called with `new`', function() {
+
+            var MiddlewareJS = middleware.MiddlewareJS;
 
             expect(function() {
                 MiddlewareJS();
@@ -52,6 +66,26 @@ describe('MiddlewareJS', function() {
             expect(function() {
                 new MiddlewareJS();
             }).not.toThrow();
+
+        });
+
+        it('constructor autobinds run() and use()', function(done) {
+
+            var fn1 = jest.fn(function(next) { next(); });
+
+            var app = middleware();
+
+            var use = app.use;
+            var run = app.run;
+
+            expect(function() {
+                use(fn1);
+            }).not.toThrow();
+
+            expect(function() {
+                run().then(done);
+            }).not.toThrow();
+
         });
 
     });
@@ -60,53 +94,44 @@ describe('MiddlewareJS', function() {
 
         var middleware = require('.');
 
-        it('succeeds without middleware', function(done) {
+        it('returns a promise', function() {
+
+            var fn1 = jest.fn();
+
             var app = middleware();
-            app.run(done);
+            app.use(fn1);
+            var result = app.run();
+
+            expect(result.constructor).toBe(Promise);
+            expect(result instanceof Promise).toBe(true);
+
+        });
+
+        it('succeeds without middleware', function(done) {
+
+            var app = middleware();
+
+            app.run().then(done);
+
         });
 
         it('succeeds without middleware, with args', function(done) {
-            var app = middleware();
-            app.run({}, {}, done);
-        });
-
-        it('use() throws when given an incorrect type', function() {
-
-            var fn = 'not a function';
 
             var app = middleware();
 
-            expect(function() {
-                app.use(fn);
-            }).toThrow();
+            app.run({}, {}).then(done);
 
         });
 
-        it('succeeds running multiple times', function() {
-
-            var fn1 = jest.fn();
-            var fn2 = jest.fn();
-            var fn3 = jest.fn();
+        it('succeeds running multiple times', function(done) {
 
             var app = middleware();
-            app.run({}, fn1);
-            app.run({}, {}, fn2);
-            app.run({}, 13, 37, {}, fn3);
+            var p1 = app.run({});
+            var p2 = app.run({}, {});
+            var p3 = app.run({}, 13, 37, {});
 
-            expect(fn1).toHaveBeenCalled();
-            expect(fn2).toHaveBeenCalled();
-            expect(fn3).toHaveBeenCalled();
-        });
+            Promise.all([p1, p2, p3]).then(done);
 
-        it('calls done function without a context', function(done) {
-
-            var app = middleware();
-            app.run(cb);
-
-            function cb() {
-                expect(isEmptyObject(this)).toEqual(true);
-                done();
-            }
         });
 
     });
@@ -115,7 +140,7 @@ describe('MiddlewareJS', function() {
 
         var middleware = require('.');
 
-        it('errors when given non function types', function() {
+        it('throws when given non function types', function() {
 
             var app = middleware();
 
@@ -128,12 +153,17 @@ describe('MiddlewareJS', function() {
             }).toThrow();
 
             expect(function() {
-                app.use(1, function() {});
+                app.use('not a function');
+            }).toThrow();
+
+            expect(function() {
+                app.use({}, function() {});
             }).toThrow();
 
             expect(function() {
                 app.use(function() {}, []);
             }).toThrow();
+
         });
 
         it('iterates through basic middleware', function(done) {
@@ -144,13 +174,14 @@ describe('MiddlewareJS', function() {
             var app = middleware();
             app.use(fn1);
             app.use(fn2);
-            app.run({}, {}, cb);
+            app.run({}, {}).then(cb);
 
             function cb() {
                 expect(fn1).toHaveBeenCalled();
                 expect(fn2).toHaveBeenCalled();
                 done();
             }
+
         });
 
         it('halts execution when next() is not called', function() {
@@ -162,7 +193,7 @@ describe('MiddlewareJS', function() {
             var app = middleware();
             app.use(fn1);
             app.use(fn2);
-            app.run(cb);
+            app.run().then(cb);
 
             expect(fn1).toHaveBeenCalled();
             expect(fn2).not.toHaveBeenCalled();
@@ -182,13 +213,14 @@ describe('MiddlewareJS', function() {
             var app = middleware();
             app.use(fn1);
             app.use(fn2);
-            app.run({}, {}, cb);
+            app.run({}, {}).then(cb);
 
             function cb() {
                 expect(fn1).toHaveBeenCalled();
                 expect(fn2).toHaveBeenCalled();
                 done();
             }
+
         });
 
         it('calls handler functions without a context', function(done) {
@@ -201,12 +233,13 @@ describe('MiddlewareJS', function() {
 
             var app = middleware();
             app.use(fn);
-            app.run(cb);
+            app.run().then(cb);
 
             function cb() {
-                expect(isEmptyObject(context)).toEqual(true);
+                expect(isEmptyObject(context)).toBe(true);
                 done();
             }
+
         });
 
         it('handler function is given all arguments and next()', function(done) {
@@ -218,7 +251,7 @@ describe('MiddlewareJS', function() {
 
             var app = middleware();
             app.use(fn);
-            app.run(arg1, arg2, arg3, cb);
+            app.run(arg1, arg2, arg3).then(cb);
 
             function cb() {
                 expect(fn).toHaveBeenCalled();
@@ -228,6 +261,7 @@ describe('MiddlewareJS', function() {
                 expect(typeof fn.mock.calls[0][3]).toBe('function');
                 done();
             }
+
         });
 
     });
@@ -257,13 +291,14 @@ describe('MiddlewareJS', function() {
             var app = middleware();
             app.use(fn1);
             app.use(filterFn, fn2);
-            app.run({ url: '/yes' }, {}, cb);
+            app.run({ url: '/yes' }, {}).then(cb);
 
             function cb() {
                 expect(fn1).toHaveBeenCalled();
                 expect(fn2).toHaveBeenCalled();
                 done();
             }
+
         });
 
         it('skips not matching filter', function(done) {
@@ -280,13 +315,14 @@ describe('MiddlewareJS', function() {
             var app = middleware();
             app.use(filterFn1, fn1);
             app.use(filterFn2, fn2);
-            app.run({ url: '/yes' }, cb);
+            app.run({ url: '/yes' }).then(cb);
 
             function cb() {
                 expect(fn1).toHaveBeenCalled();
                 expect(fn2).not.toHaveBeenCalled();
                 done();
             }
+
         });
 
         it('custom filter function: executes matching filter', function(done) {
@@ -305,13 +341,14 @@ describe('MiddlewareJS', function() {
             var app = middleware();
             app.use(fn1);
             app.use(fn2);
-            app.run({ url: '/prefix' }, {}, cb);
+            app.run({ url: '/prefix' }, {}).then(cb);
 
             function cb() {
                 expect(fn1Called).toBe(true);
                 expect(fn2Called).toBe(true);
                 done();
             }
+
         });
 
         it('custom filter function: skips not matching filter', function(done) {
@@ -330,13 +367,14 @@ describe('MiddlewareJS', function() {
             var app = middleware();
             app.use(fn1);
             app.use(fn2);
-            app.run({ url: '/yes' }, {}, cb);
+            app.run({ url: '/yes' }, {}).then(cb);
 
             function cb() {
                 expect(fn1Called).toBe(true);
                 expect(fn2Called).toBe(false);
                 done();
             }
+
         });
 
         it('calls filter functions without a context', function(done) {
@@ -350,12 +388,13 @@ describe('MiddlewareJS', function() {
 
             var app = middleware();
             app.use(filterFn, fn);
-            app.run({ url: '/yes' }, cb);
+            app.run({ url: '/yes' }).then(cb);
 
             function cb() {
-                expect(isEmptyObject(context)).toEqual(true);
+                expect(isEmptyObject(context)).toBe(true);
                 done();
             }
+
         });
 
         it('filter function is given all arguments but next()', function(done) {
@@ -367,7 +406,7 @@ describe('MiddlewareJS', function() {
 
             var app = middleware();
             app.use(filterFn, fn);
-            app.run(arg1, arg2, cb);
+            app.run(arg1, arg2).then(cb);
 
             function cb() {
                 expect(filterFn).toHaveBeenCalled();
@@ -376,6 +415,7 @@ describe('MiddlewareJS', function() {
                 expect(filterFn.mock.calls[0][2]).toBe(undefined);
                 done();
             }
+
         });
 
     });
