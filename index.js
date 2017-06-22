@@ -1,5 +1,6 @@
 'use strict';
 
+/* global Promise */
 /* eslint-disable consistent-return */
 
 /**
@@ -19,10 +20,13 @@ var emptyContext = Object.freeze(Object.create(null));
  * @returns {MiddlewareJS}
  */
 function factory() {
+
     if (this instanceof factory) { // eslint-disable-line no-invalid-this
         throw new Error('middleware factory function must not be called with `new`!');
     }
+
     return new MiddlewareJS();
+
 }
 
 /**
@@ -30,35 +34,45 @@ function factory() {
  * @constructor
  */
 function MiddlewareJS() {
+
     if (!(this instanceof MiddlewareJS)) {
         throw new Error('MiddlewareJS constructor must be called with `new`!');
     }
+
     this._middlewares = [];
+
+    // Autobind
+    this.run = MiddlewareJS.prototype.run.bind(this);
+    this.use = MiddlewareJS.prototype.use.bind(this);
+
 }
 
 /**
+ * @returns {Promise}
  */
 MiddlewareJS.prototype.run = function run() {
 
-    // Grab arguments and `done` function, given last
+    // Convert arguments to array
     var args = [].slice.call(arguments);
-    var done = args.pop();
 
     // Clone middlewares array
     var mws = this._middlewares.slice();
 
-    // Call all middlewares in a recursive loop
-    (function next() {
+    return new Promise(function promiseExecutor(resolve) {
 
-        if (!mws.length) {
-            return done.apply(emptyContext, args);
-        }
+        // Call all middlewares in a recursive loop
+        (function next() {
 
-        var mw = mws.shift();
+            if (!mws.length) {
+                return resolve();
+                // Return done.apply(emptyContext, args);
+            }
 
-        return mw.apply(emptyContext, args.concat(next));
+            return mws.shift().apply(emptyContext, args.concat(next));
 
-    }());
+        }());
+
+    });
 
 };
 
