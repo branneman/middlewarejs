@@ -194,7 +194,7 @@ module.exports = {
         "operator-assignment": "error",
         "operator-linebreak": "error",
         "padded-blocks": "off",
-        "prefer-arrow-callback": "error",
+        "prefer-arrow-callback": "off",
         "prefer-const": "error",
         "prefer-numeric-literals": "error",
         "prefer-promise-reject-errors": "error",
