@@ -107,6 +107,18 @@ describe('MiddlewareJS', function() {
 
         });
 
+        it('rejects a promise on throwing middleware', function() {
+
+            var err = new Error('Test');
+            var fn1 = function() { throw err; };
+
+            var app = middleware();
+            app.use(fn1);
+
+            return expect(app.run()).rejects.toBe(err);
+
+        });
+
         it('succeeds without middleware', function(done) {
 
             var app = middleware();

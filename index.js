@@ -65,7 +65,6 @@ MiddlewareJS.prototype.run = function run() {
 
             if (!mws.length) {
                 return resolve();
-                // Return done.apply(emptyContext, args);
             }
 
             return mws.shift().apply(emptyContext, args.concat(next));
